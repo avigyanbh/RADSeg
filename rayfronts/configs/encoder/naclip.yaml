@@ -1,0 +1,10 @@
+defaults:
+  - base_encoder
+
+_target_: rayfronts.image_encoders.NACLIPEncoder
+
+# Choose from ["ViT-B/32", "ViT-B/16", "ViT-L/14", "ViT-L/14@336px"]
+model_version: "ViT-B/16"
+
+# Standard deviation of the gaussian kernel.
+gauss_std: 7.

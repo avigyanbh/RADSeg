@@ -1,0 +1,11 @@
+defaults:
+  - base_vis
+
+_target_: rayfronts.visualizers.Ros2Vis
+
+# Prefix for the ROS2 topics.
+topic_prefix: "/rayfronts"
+
+# Reliability of the ROS2 topics. Can be "reliable" or "best_effort".
+# RVIZ2 only supports "reliable" whereas best_effort can be better for speed.
+reliability: "reliable"

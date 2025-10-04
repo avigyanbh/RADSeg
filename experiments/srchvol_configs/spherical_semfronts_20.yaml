@@ -1,0 +1,11 @@
+defaults:
+  - base
+  - _self_
+
+depth_limit: 20
+
+eval_out: srchvol_out/spherical_semfronts_20
+
+mapping:
+  angle_bin_size: 360
+  infer_direction: False

@@ -1,0 +1,2 @@
+# Limit mapping to this box [[a,b,c], [x,y,z]] where x > a, y > b, z > c
+clip_bbox: null

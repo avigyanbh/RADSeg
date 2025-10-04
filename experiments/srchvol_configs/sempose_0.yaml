@@ -1,0 +1,16 @@
+defaults:
+  - base
+  - _self_
+
+depth_limit: 0
+
+eval_out: srchvol_out/sempose_0
+
+mapping:
+  fronti_min_unobserved: 0
+  fronti_min_empty: 0
+  fronti_min_occupied: 0
+  fronti_subsampling: 4
+  fronti_subsampling_min_fronti: 1
+  zero_depth_mode: True
+  global_encoding: True

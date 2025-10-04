@@ -1,0 +1,2 @@
+_target_: rayfronts.messaging_services.Ros2MessagingService
+text_query_topic: "mapping/query/text"

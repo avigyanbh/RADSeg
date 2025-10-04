@@ -1,0 +1,24 @@
+defaults:
+  - base_dataset
+
+_target_: rayfronts.datasets.TartanAirDataset
+
+# Path to the root tartanair dataset.
+path: ???
+
+# Name of the scene from replica. E.g "AbandonedFactory".
+scene_name: "AbandonedFactory"
+
+# Choose from ["Data_ground", "Data_easy", "Data_hard"]
+data_partition: "Data_ground"
+
+# which sequence/trajectory to load. Can pass a list of sequences to play all.
+sequence: "P0000"
+
+# Limit outputted depth to this value. TartanAir has sky/background as large
+# encompassing spheres and as such the depth cutoff must be set to avoid mapping
+# that.
+depth_cutoff: 100
+
+# Which label_file to load from.
+label_file: "seg_label_clean.json"

@@ -1,0 +1,1 @@
+from rayfronts.image_encoders.naclip.naclip import NACLIPEncoder

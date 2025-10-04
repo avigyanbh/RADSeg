@@ -1,0 +1,21 @@
+defaults:
+  - base_encoder
+
+_target_: rayfronts.image_encoders.TridentEncoder
+
+# Based on Trident implementation found in
+# https://github.com/YuHengsss/Trident
+
+# Based on the open_clip implementation 
+# found in https://github.com/mlfoundations/open_clip 
+clip_type: 'openai' # source for pretrained weights for CLIp
+model_type: 'ViT-L/14'
+
+# Loads from the https://github.com/facebookresearch/dino
+# for more details check out the Trident paper and code
+vfm_model: 'dino'
+
+# Details on SAM model type and available checkpoints to be downloaded 
+# can be found on https://github.com/facebookresearch/segment-anything
+sam_model_type: 'vit_l'
+sam_ckpt: ??? #Path to SAM checkpoint

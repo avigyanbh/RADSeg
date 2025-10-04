@@ -1,0 +1,1 @@
+from rayfronts.image_encoders.talk2dino.talk2dino import Talk2DINOEncoder

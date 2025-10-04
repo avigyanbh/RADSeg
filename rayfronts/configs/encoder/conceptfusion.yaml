@@ -1,0 +1,12 @@
+defaults:
+  - base_encoder
+
+_target_: rayfronts.image_encoders.ConceptFusionEncoder
+
+# Choose from "vit_b", "vit_l", or "vit_h"
+sam_model: "vit_l"
+sam_model_path: ???
+
+# Choose from any combination available in open_clip
+open_clip_model : "ViT-L-14"
+open_clip_pretrained_dataset : "laion2b_s32b_b82k"

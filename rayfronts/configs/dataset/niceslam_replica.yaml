@@ -1,0 +1,10 @@
+defaults:
+  - base_dataset
+
+_target_: rayfronts.datasets.NiceReplicaDataset
+
+# Path to the root nice slam directory.
+path: ???
+
+# Name of the scene from replica. E.g "office0".
+scene_name: "office0"

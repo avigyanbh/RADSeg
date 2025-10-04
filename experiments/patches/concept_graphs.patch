@@ -1,0 +1,417 @@
+diff --git a/conceptgraph/configs/slam_pipeline/base.yaml b/conceptgraph/configs/slam_pipeline/base.yaml
+index b1748f2..febdd7f 100644
+--- a/conceptgraph/configs/slam_pipeline/base.yaml
++++ b/conceptgraph/configs/slam_pipeline/base.yaml
+@@ -5,8 +5,8 @@ scene_id: train_3_interact
+ start: 0
+ end: -1
+ stride: 1
+-image_height: null # if null, it will be determined by dataconfig
+-image_width: null # if null, it will be determined by dataconfig
++image_height: 480 # if null, it will be determined by dataconfig
++image_width: 640 # if null, it will be determined by dataconfig
+ 
+ # Input detections
+ gsa_variant: ram
+@@ -39,7 +39,7 @@ skip_bg: !!bool True
+ min_points_threshold: 16 # projected and sampled pcd with less points will be skipped
+ 
+ # point cloud processing
+-downsample_voxel_size: 0.025
++downsample_voxel_size: 0.05
+ dbscan_remove_noise: !!bool True
+ dbscan_eps: 0.05
+ dbscan_min_points: 10
+diff --git a/conceptgraph/dataset/scannet_constants.py b/conceptgraph/dataset/scannet_constants.py
+new file mode 100644
+index 0000000..589ae12
+--- /dev/null
++++ b/conceptgraph/dataset/scannet_constants.py
+@@ -0,0 +1,55 @@
++SCANNET_CLASSES = [
++    'other',
++    'wall',
++    'floor',
++    'cabinet',
++    'bed',
++    'chair',
++    'sofa',
++    'table',
++    'door',
++    'window',
++    'bookshelf',
++    'picture',
++    'counter',
++    'blinds',
++    'desk',
++    'shelves',
++    'curtain',
++    'dresser',
++    'pillow',
++    'mirror',
++    'floor mat',
++    'clothes',
++    'ceiling',
++    'books',
++    'refridgerator',
++    'television',
++    'paper',
++    'towel',
++    'shower curtain',
++    'box',
++    'whiteboard',
++    'person',
++    'night stand',
++    'toilet',
++    'sink',
++    'lamp',
++    'bathtub',
++    'bag'
++    ]
++
++SCANNET_SCENE_IDS = [
++    "scene0050_00",
++    "scene0231_01",
++    "scene0378_02",
++    "scene0050_01",
++    "scene0231_02",
++    "scene0518_00",
++    "scene0011_00",
++    "scene0050_02",
++    "scene0378_00",
++    "scene0011_01",
++    "scene0231_00",
++    "scene0378_01"
++]
+diff --git a/conceptgraph/hydra_configs/base_mapping.yaml b/conceptgraph/hydra_configs/base_mapping.yaml
+index aa2699f..a60652c 100644
+--- a/conceptgraph/hydra_configs/base_mapping.yaml
++++ b/conceptgraph/hydra_configs/base_mapping.yaml
+@@ -39,7 +39,7 @@ skip_bg: !!bool True
+ min_points_threshold: 16 # projected and sampled pcd with less points will be skipped
+ 
+ # point cloud processing
+-downsample_voxel_size: 0.025
++downsample_voxel_size: 0.05
+ dbscan_remove_noise: !!bool True
+ dbscan_eps: 0.05
+ dbscan_min_points: 10
+diff --git a/conceptgraph/scripts/eval_replica_semseg.py b/conceptgraph/scripts/eval_replica_semseg.py
+index ded41bc..41cb4af 100644
+--- a/conceptgraph/scripts/eval_replica_semseg.py
++++ b/conceptgraph/scripts/eval_replica_semseg.py
+@@ -62,7 +62,7 @@ def eval_replica(
+     args: argparse.Namespace,
+     class_all2existing: torch.Tensor,
+     ignore_index=[],
+-    gt_class_only: bool = True, # only compute the conf matrix for the GT classes
++    gt_class_only: bool = False, # only compute the conf matrix for the GT classes
+ ):
+     class2color = get_random_colors(len(class_names))
+ 
+@@ -82,9 +82,9 @@ def eval_replica(
+     gt_color = gt_map.colors_padded[0]
+     gt_embedding = gt_map.embeddings_padded[0]  # (N, num_class)
+     gt_class = gt_embedding.argmax(dim=1)  # (N,)
+-    gt_class = class_all2existing[gt_class]  # (N,)
+-    assert gt_class.min() >= 0
+-    assert gt_class.max() < len(REPLICA_EXISTING_CLASSES)
++    # gt_class = class_all2existing[gt_class]  # (N,)
++    # assert gt_class.min() >= 0
++    # assert gt_class.max() < len(REPLICA_EXISTING_CLASSES)
+ 
+     # transform pred_xyz and gt_xyz according to the first pose in gt_poses
+     gt_xyz = gt_xyz @ gt_poses[0, :3, :3].t() + gt_poses[0, :3, 3]
+@@ -167,6 +167,11 @@ def eval_replica(
+     pred_xyz = torch.from_numpy(np.concatenate(pred_xyz, axis=0))
+     pred_color = torch.from_numpy(np.concatenate(pred_color, axis=0))
+     pred_class = torch.from_numpy(np.concatenate(pred_class, axis=0)).long()
++
++    # Dumping the prediction results to be used for evaluation in RayFronts evaluation script
++    semseg_pred = {'semseg_pred_xyz': pred_xyz, 'semseg_pred_label': pred_class}
++    torch.save(semseg_pred, f"semseg_preds/semseg_pred_{scene_id}.pt")
++    return None, None
+     
+     '''Load the SLAM reconstruction results, to ensure fair comparison'''
+     slam_path = os.path.join(
+@@ -258,7 +263,7 @@ def main(args: argparse.Namespace):
+     class_all2existing = torch.ones(len(REPLICA_CLASSES)).long() * -1
+     for i, c in enumerate(REPLICA_EXISTING_CLASSES):
+         class_all2existing[c] = i
+-    class_names = [REPLICA_CLASSES[i] for i in REPLICA_EXISTING_CLASSES]
++    class_names = REPLICA_CLASSES
+     
+     if args.n_exclude == 1:
+         exclude_class = [class_names.index(c) for c in [
+@@ -278,9 +283,9 @@ def main(args: argparse.Namespace):
+     print("Excluding classes: ", [(i, class_names[i]) for i in exclude_class])
+ 
+     # Compute the CLIP embedding for each class
+-    clip_model, _, clip_preprocess = open_clip.create_model_and_transforms("ViT-H-14", "laion2b_s32b_b79k")
++    clip_model, _, clip_preprocess = open_clip.create_model_and_transforms("ViT-L-14", "laion2b_s32b_b82k")
+     clip_model = clip_model.to(args.device)
+-    clip_tokenizer = open_clip.get_tokenizer("ViT-H-14")
++    clip_tokenizer = open_clip.get_tokenizer("ViT-L-14")
+     prompts = [f"an image of {c}" for c in class_names]
+     text = clip_tokenizer(prompts)
+     text = text.to(args.device)
+@@ -300,6 +305,8 @@ def main(args: argparse.Namespace):
+             class_all2existing = class_all2existing,
+             ignore_index = exclude_class,
+         )
++        if(conf_matrix == None):
++            continue
+         
+         conf_matrix = conf_matrix.detach().cpu()
+         conf_matrix_all += conf_matrix
+@@ -308,7 +315,7 @@ def main(args: argparse.Namespace):
+             "conf_matrix": conf_matrix,
+             "keep_index": keep_index,
+         }
+-        
++    exit() 
+     # Remove the rows and columns that are not in keep_class_index
+     conf_matrices["all"] = {
+         "conf_matrix": conf_matrix_all,
+diff --git a/conceptgraph/scripts/eval_scannet_semseg.py b/conceptgraph/scripts/eval_scannet_semseg.py
+new file mode 100644
+index 0000000..2309955
+--- /dev/null
++++ b/conceptgraph/scripts/eval_scannet_semseg.py
+@@ -0,0 +1,172 @@
++import gzip
++import os
++import glob
++from pathlib import Path
++import argparse
++import pickle
++
++import numpy as np
++import torch
++import open_clip
++
++from conceptgraph.dataset.scannet_constants import (
++    SCANNET_CLASSES,
++    SCANNET_SCENE_IDS
++)
++from conceptgraph.slam.slam_classes import MapObjectList
++from conceptgraph.utils.vis import get_random_colors
++
++def get_parser():
++    parser = argparse.ArgumentParser()
++    parser.add_argument(
++        "--scannet_root", type=Path, default=Path("~/rdata/scannet/").expanduser()
++    )
++    parser.add_argument(
++        "--pred_exp_name", 
++        type=str,
++        default="ram_withbg_allclasses_overlap_maskconf0.25_simsum1.2_dbscan.1_masksub",
++        help="The name of cfslam experiment. Will be used to load the result. "
++    )
++    parser.add_argument(
++        "--n_exclude", type=int, default=1, choices=[1, 4, 6],
++        help='''Number of classes to exclude:
++        1: exclude "other"
++        4: exclude "other", "floor", "wall", "ceiling"
++        6: exclude "other", "floor", "wall", "ceiling", "door", "window"
++        ''',
++    )
++    parser.add_argument(
++        "--device", type=str, default="cuda:0"
++    )
++    return parser
++
++def eval_scannet(
++    scene_id: str,
++    class_names: list[str],
++    class_feats: torch.Tensor,
++    args: argparse.Namespace,
++    ignore_index=[],
++    gt_class_only: bool = False, # only compute the conf matrix for the GT classes
++):
++    class2color = get_random_colors(len(class_names))
++    
++    # Get the set of classes that are used for evaluation
++    all_class_index = np.arange(len(class_names))
++    ignore_index = np.asarray(ignore_index)
++
++    keep_index = np.setdiff1d(all_class_index, ignore_index)
++
++    print(
++        f"{len(keep_index)} classes remains. They are: ",
++        [(i, class_names[i]) for i in keep_index],
++    )
++    
++    '''Load the predicted point cloud'''
++    result_paths = glob.glob(
++        os.path.join(
++            args.scannet_root, scene_id, "pcd_saves", 
++            f"full_pcd_{args.pred_exp_name}*.pkl.gz"
++        )
++    )
++    if len(result_paths) == 0:
++        raise ValueError(f"No result found for {scene_id} with {args.pred_exp_name}")
++        
++    # Get the newest result over result_paths
++    result_paths = sorted(result_paths, key=os.path.getmtime)
++    result_path = result_paths[-1]
++    print(f"Loading mapping result from {result_path}")
++    
++    with gzip.open(result_path, "rb") as f:
++            results = pickle.load(f)
++        
++    objects = MapObjectList()
++    objects.load_serializable(results['objects'])
++
++    # Compute the CLIP similarity for the mapped objects and assign class to them
++    object_feats = objects.get_stacked_values_torch("clip_ft").to(args.device)
++    object_feats = object_feats / object_feats.norm(dim=-1, keepdim=True) # (num_objects, D)
++    object_class_sim = object_feats @ class_feats.T # (num_objects, num_classes)
++    
++    # suppress the logits to -inf that are not in torch.from_numpy(keep_class_index)
++    object_class_sim[:, ignore_index] = -1e10
++    object_class = object_class_sim.argmax(dim=-1) # (num_objects,)
++    
++    if args.n_exclude == 1:
++        if results['bg_objects'] is None:
++            print("Warning: no background objects found. This is expected if only SAM is used, but not the detector. ")
++        else:
++            # Also add the background objects
++            bg_objects = MapObjectList()
++            bg_objects.load_serializable(results['bg_objects'])
++            
++            # Assign class to the background objects (hard assignment)
++            for obj in bg_objects:
++                cn = obj['class_name'][0]
++                c = class_names.index(cn.lower())
++                object_class = torch.cat([object_class, object_class.new_full([1], c)])
++                
++            objects += bg_objects
++    
++    pred_xyz = []
++    pred_color = []
++    pred_class = []
++    for i in range(len(objects)):
++        obj_pcd = objects[i]['pcd']
++        pred_xyz.append(np.asarray(obj_pcd.points))
++        pred_color.append(np.asarray(obj_pcd.colors))
++        pred_class.append(np.ones(len(obj_pcd.points)) * object_class[i].item())
++        
++    pred_xyz = torch.from_numpy(np.concatenate(pred_xyz, axis=0))
++    pred_color = torch.from_numpy(np.concatenate(pred_color, axis=0))
++    pred_class = torch.from_numpy(np.concatenate(pred_class, axis=0)).long()
++
++    # Dumping the prediction results to be used for evaluation in RayFronts evaluation script
++    semseg_pred = {'semseg_pred_xyz': pred_xyz, 'semseg_pred_label': pred_class}
++    torch.save(semseg_pred, f"semseg_preds/semseg_pred_{scene_id}.pt")
++    return None, None
++
++def main(args: argparse.Namespace):
++
++    class_names = SCANNET_CLASSES
++    
++    if args.n_exclude == 1:
++        exclude_class = [class_names.index(c) for c in [
++            "other"
++        ]]
++    elif args.n_exclude == 4:
++        exclude_class = [class_names.index(c) for c in [
++            "other", "floor", "wall", "ceiling"
++        ]]
++    elif args.n_exclude == 6:
++        exclude_class = [class_names.index(c) for c in [
++            "other", "floor", "wall", "ceiling", "door", "window"
++        ]]
++    else:
++        raise ValueError("Invalid n_exclude: %d" % args.n_exclude)
++    
++    print("Excluding classes: ", [(i, class_names[i]) for i in exclude_class])
++
++    # Compute the CLIP embedding for each class
++    clip_model, _, clip_preprocess = open_clip.create_model_and_transforms("ViT-L-14", "laion2b_s32b_b82k")
++    clip_model = clip_model.to(args.device)
++    clip_tokenizer = open_clip.get_tokenizer("ViT-L-14")
++    prompts = [f"an image of {c}" for c in class_names]
++    text = clip_tokenizer(prompts)
++    text = text.to(args.device)
++    class_feats = clip_model.encode_text(text)
++    class_feats /= class_feats.norm(dim=-1, keepdim=True) # (num_classes, D)
++
++    for scene_id in SCANNET_SCENE_IDS:
++        print("Evaluating on:", scene_id)
++        conf_matrix, keep_index = eval_scannet(
++            scene_id = scene_id,
++            class_names = class_names,
++            class_feats = class_feats,
++            args = args,
++            ignore_index = exclude_class,
++        )
++
++if __name__ == '__main__':
++    parser = get_parser()
++    args = parser.parse_args()
++    main(args)
+\ No newline at end of file
+diff --git a/conceptgraph/scripts/generate_gsa_results.py b/conceptgraph/scripts/generate_gsa_results.py
+index da83d6f..7ee81c4 100644
+--- a/conceptgraph/scripts/generate_gsa_results.py
++++ b/conceptgraph/scripts/generate_gsa_results.py
+@@ -70,8 +70,8 @@ GROUNDING_DINO_CONFIG_PATH = os.path.join(GSA_PATH, "GroundingDINO/groundingdino
+ GROUNDING_DINO_CHECKPOINT_PATH = os.path.join(GSA_PATH, "./groundingdino_swint_ogc.pth")
+ 
+ # Segment-Anything checkpoint
+-SAM_ENCODER_VERSION = "vit_h"
+-SAM_CHECKPOINT_PATH = os.path.join(GSA_PATH, "./sam_vit_h_4b8939.pth")
++SAM_ENCODER_VERSION = "vit_l"
++SAM_CHECKPOINT_PATH = os.path.join(GSA_PATH, "./sam_vit_l_0b3195.pth")
+ 
+ # Tag2Text checkpoint
+ TAG2TEXT_CHECKPOINT_PATH = os.path.join(TAG2TEXT_PATH, "./tag2text_swin_14m.pth")
+@@ -243,12 +243,12 @@ def get_sam_mask_generator(variant:str, device: str | int) -> SamAutomaticMaskGe
+         sam.to(device)
+         mask_generator = SamAutomaticMaskGenerator(
+             model=sam,
+-            points_per_side=12,
++            points_per_side=6,
+             points_per_batch=144,
+             pred_iou_thresh=0.88,
+             stability_score_thresh=0.95,
+             crop_n_layers=0,
+-            min_mask_region_area=100,
++            min_mask_region_area=25,
+         )
+         return mask_generator
+     elif variant == "fastsam":
+@@ -318,10 +318,10 @@ def main(args: argparse.Namespace):
+     ###
+     # Initialize the CLIP model
+     clip_model, _, clip_preprocess = open_clip.create_model_and_transforms(
+-        "ViT-H-14", "laion2b_s32b_b79k"
++        "ViT-L-14", "laion2b_s32b_b82k"
+     )
+     clip_model = clip_model.to(args.device)
+-    clip_tokenizer = open_clip.get_tokenizer("ViT-H-14")
++    clip_tokenizer = open_clip.get_tokenizer("ViT-L-14")
+     
+     # Initialize the dataset
+     dataset = get_dataset(
+@@ -435,6 +435,7 @@ def main(args: argparse.Namespace):
+         detections_save_path = str(detections_save_path)
+         
+         image = cv2.imread(color_path) # This will in BGR color space
++        image = cv2.resize(image, (args.desired_width, args.desired_height), interpolation=cv2.INTER_LINEAR)
+         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # Convert to RGB color space
+         image_pil = Image.fromarray(image_rgb)
+         
+diff --git a/conceptgraph/slam/cfslam_pipeline_batch.py b/conceptgraph/slam/cfslam_pipeline_batch.py
+index e7abafc..e186375 100644
+--- a/conceptgraph/slam/cfslam_pipeline_batch.py
++++ b/conceptgraph/slam/cfslam_pipeline_batch.py
+@@ -168,6 +168,7 @@ def main(cfg : DictConfig):
+         # get color image
+         color_path = dataset.color_paths[idx]
+         image_original_pil = Image.open(color_path)
++        image_original_pil = image_original_pil.resize((640, 480), Image.Resampling.NEAREST)
+ 
+         color_tensor, depth_tensor, intrinsics, *_ = dataset[idx]
+         # image_rgb = cv2.cvtColor(cv2.imread(color_path), cv2.COLOR_BGR2RGB)

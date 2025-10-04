@@ -1,0 +1,56 @@
+defaults:
+  - default
+  - override dataset: tartanair
+  - override encoder: naradio
+  - override mapping: semantic_ray_frontiers_map
+  - override vis: null
+  - _self_
+
+hydra:
+  sweeper:
+    params:
+      dataset.scene_name: Downtown,Factory,AbandonedCableDay,ConstructionSiteOvercast
+
+eval_out: srcvhol_out
+prediction_thresh: 0.1
+prompt_denoising_thresh: 0.5
+online_eval_period: 10
+depth_limit: 20.0
+srchvol_thresh: 0.05
+default_prediction: True
+
+dataset:
+  scene_name: AbandonedCableDay
+  rgb_resolution: 640
+  depth_resolution: 640
+  frame_skip: 0
+  depth_cutoff: 50
+
+mapping:
+  vox_size: 1
+  vox_accum_period: 2
+  max_pts_per_frame: -1
+  max_empty_pts_per_frame: -1
+  fronti_min_unobserved: 9
+  fronti_min_empty: 4
+  fronti_min_occupied: 0
+  fronti_subsampling: 4
+  fronti_subsampling_min_fronti: 5
+  ray_accum_period: 8
+  ray_accum_phase: 4
+  max_empty_cnt: 10
+  max_occ_cnt: 100
+  occ_observ_weight: 100
+  angle_bin_size: 30
+  occ_thickness: 2
+  max_rays_per_frame: 10000
+  ray_erosion: 32
+  max_depth_sensing: ${depth_limit}
+  ray_tracing: False
+
+encoder:
+  return_radio_features: True
+  model_version: radio_v2.5-l
+
+querying:
+  text_query_mode: labels

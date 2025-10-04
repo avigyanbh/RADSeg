@@ -1,0 +1,15 @@
+# Resolution of rgb frames. (Used for painting geometry and computing features)
+# Set to null to keep the same size as original.
+# Either a single integer or a 2-element list [height, width]
+rgb_resolution: null
+
+# Resolution of depth frames (Used for projecting geometry).
+# Set to null to keep the same size as original. 
+# Either a single integer or a 2-element list [height, width]
+depth_resolution: null
+
+# Frame skipping when loading data. Ex. frame_skip: 2, means we consume
+# a frame then drop 2 and so on.
+frame_skip: 0
+
+interp_mode: ${interp_mode}

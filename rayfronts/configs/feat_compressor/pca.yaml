@@ -1,0 +1,8 @@
+defaults:
+  - base_feat_compressor
+
+_target_: rayfronts.feat_compressors.PcaCompressor
+
+out_dim: 128
+
+path: null

@@ -1,0 +1,9 @@
+defaults:
+  - base
+  - _self_
+
+depth_limit: 10
+eval_out: srchvol_out/rayfronts_10
+
+mapping:
+  ray_tracing: True

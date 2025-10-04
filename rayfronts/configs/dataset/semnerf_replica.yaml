@@ -1,0 +1,11 @@
+defaults:
+  - base_dataset
+
+_target_: rayfronts.datasets.SemanticNerfReplicaDataset
+
+# Path to the root semantic nerf replica directory.
+path: ???
+
+# You can choose a specific sequence `office_0/Sequence_1`
+# or just put the scene name "office_0" to play all sequences in the scene.
+scene_name: "office_0/Sequence_1"

@@ -1,0 +1,11 @@
+defaults:
+  - base
+  - _self_
+
+depth_limit: 10
+
+eval_out: srchvol_out_raysampling/unidir_semfronts_10
+
+mapping:
+  angle_bin_size: 360
+  infer_direction: True

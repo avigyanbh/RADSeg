@@ -1,0 +1,15 @@
+# How often to update the visualization of the map.
+# Set to -1 to disable map visualization.
+map_period: 10
+
+# How often to visualize 2D inputs (RGB/depth/feature images).
+# Set to -1 to disable visualizing pose.
+input_period: 5
+
+# How often to log pose. Set to -1 to disable visualizing pose and trajectory.
+pose_period: 5
+
+# Whether to use the same heatmap scale across all logs.
+global_heat_scale: False
+
+feat_compressor: ${oc.select:feat_compressor, null}

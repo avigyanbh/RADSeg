@@ -1,0 +1,43 @@
+defaults:
+  - base_mapping
+
+_target_: rayfronts.mapping.OccupancyVoxelMap
+
+vox_size: 0.3
+
+# How often do we aggregate voxels into the global representation.
+# Setting to 10, will accumulate point clouds from 10 frames before 
+# voxelization.
+vox_accum_period: 8
+
+# How many points to project per frame. Set to -1 to project all valid depth
+# points.
+max_pts_per_frame: -1
+
+# How many empty points to project per frame. Set to -1 to project all valid 
+# depth points.
+max_empty_pts_per_frame: -1
+
+# Depending on the max sensing range, we project empty voxels up to that range
+# if that pixel had +inf depth or out of range. Set to -1 to use the max depth
+# in that frame as the max sensor range.
+max_depth_sensing: -1
+
+# The maximum log odds value for empty voxels. 3 means the cell will be capped
+# at -3 which corresponds to a probability of e^-3 / ( e^-3 + 1 ) ~= 0.05
+# Lower values help compression and responsivness to dynamic objects whereas
+# higher values help stability and retention of more evidence.
+max_empty_cnt: 5
+
+# The maximum log odds value for occupied voxels. Same discussion of 
+# max_empty_cnt applies here.
+max_occ_cnt: 30
+
+# How much weight does an occupied observation hold over an empty observation.
+occ_observ_weight: 7
+
+# When projecting occupied points, how many points do we project as occupied?
+# e.g. Set to 3 to project 3 points centered around the the original depth
+# value with vox_size/2 spacing between them. This helps reduce holes in
+# surfaces.
+occ_thickness: 1

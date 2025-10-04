@@ -1,0 +1,10 @@
+defaults:
+  - base_dataset
+
+_target_: rayfronts.datasets.RosnpyDataset
+
+# Path to directory. if path ends with .npz only a single file is 
+# loaded. If the path is a directory then all .npz files within that
+# directory will be loaded in lexsorted order assuming that order
+# corresponds to the chronological order as well.
+path: ???

@@ -1,0 +1,22 @@
+defaults:
+  - base_encoder
+
+_target_: rayfronts.image_encoders.RadioEncoder
+
+# Choose from "radio_v2.5-x" where x can be b,l, or g. More models can be found 
+# on https://github.com/NVlabs/RADIO/
+model_version: radio_v2.5-l
+
+# If text_query is not null, then lang_model cannot be null
+lang_model: null # [null, "clip", "siglip"]
+
+# Whether to return radio features which are not language aligned or whether to 
+# project them to the language aligned space directly. If True, then the user 
+# can always later use the functions `align_global_features_with_language` or 
+# `align_spatial_features_with_language` to project the radio features to be 
+# language aligned.
+return_radio_features: True
+
+# Whether to use the summary projection MLP to also project the spatial
+# features. Use this for language alignment.
+use_summ_proj_for_spatial: False 

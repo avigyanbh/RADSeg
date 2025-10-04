@@ -1,0 +1,29 @@
+name: rayfronts
+channels:
+  - defaults
+  - pytorch
+  - nvidia
+  - conda-forge
+  - pyg
+dependencies:
+  - python=3.12
+  - pytorch
+  - numpy
+  - matplotlib
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=12.4
+  - pandas
+  - torch-scatter
+  - pip
+  - pip:
+    - rerun-sdk
+    - timm
+    - einops
+    - open_clip_torch
+    - transformers
+    - scipy
+    - scikit-learn
+    - hydra-core
+    - nanobind
+    - tqdm
