@@ -1,6 +1,6 @@
 defaults:
   - base_encoder
-  - /encoder@encoder: naradio
+  - /encoder@encoder: talk2dino
 
 _target_: rayfronts.image_encoders.SemSegWrapEncoder
 

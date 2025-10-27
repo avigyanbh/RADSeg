@@ -70,14 +70,14 @@ class TridentEncoder(LangSpatialImageEncoder):
     
     super().__init__(device)
 
-    self.clip = create_model(model_type, pretrained=clip_type, precision='fp16')
+    self.clip = create_model(model_type, pretrained=clip_type, precision='fp32')
     self.clip.eval().to(self.device)
     self.tokenizer = tokenizer.tokenize
     self.clip_stride = int(model_type[-2:])
 
     self.vfm_model = vfm_model
     self.vfm = torch.hub.load('facebookresearch/dino:main', 'dino_vitb16')
-    self.vfm = self.vfm.half()
+    #self.vfm = self.vfm.half()
     for p in self.vfm.parameters():
       p.requires_grad = False
     self.vfm.eval().to(self.device)
@@ -92,7 +92,7 @@ class TridentEncoder(LangSpatialImageEncoder):
     self.debug = False
 
     if sam_model_type != 'vit_h':
-      self.sam = sam_model_registry[sam_model_type](checkpoint=sam_ckpt).to(device=self.device).eval().half()
+      self.sam = sam_model_registry[sam_model_type](checkpoint=sam_ckpt).to(device=self.device).eval() #.half()
     self.sam.prompt_encoder = self.sam.prompt_encoder.float()
     self.sam.mask_decoder = self.sam.mask_decoder.float()
 
@@ -164,7 +164,7 @@ class TridentEncoder(LangSpatialImageEncoder):
 
     imgs_norm = [self.norm(self.unnorm(img_batch[i])) for i in range(len(img_batch))]
     imgs_norm = torch.stack(imgs_norm, dim=0)
-    imgs_norm = imgs_norm.half()
+    imgs_norm = imgs_norm #half()
     feat_out = {}
     def hook_fn_forward_qkv(module, input, output):
         feat_out["qkv"] = output
@@ -180,7 +180,7 @@ class TridentEncoder(LangSpatialImageEncoder):
     vfm_feats = feat[:, 1:, :].reshape(nb_im, vfm_h, vfm_w, -1)
     vfm_feats = vfm_feats.permute(0, 3, 1, 2) #batch, c, h, w
 
-    image_features = self.clip.encode_image(img_batch.half(),
+    image_features = self.clip.encode_image(img_batch, #half(),
                                             external_feats=vfm_feats, 
                                             beta=self.beta, gamma=self.gamma,
                                             paddings=paddings,

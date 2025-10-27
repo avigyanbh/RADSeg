@@ -87,9 +87,13 @@ class ScanNetDataset(SemSegDataset):
     self.intrinsics_path = os.path.join(
       scene_dir, "intrinsic/intrinsic_depth.txt")
 
+    # if self.load_semseg:
+    #   self.semseg_dir = os.path.join(
+    #     scene_dir, f"{scene_name}_2d-label-filt", "label-filt")
+    
     if self.load_semseg:
       self.semseg_dir = os.path.join(
-        scene_dir, f"{scene_name}_2d-label-filt", "label-filt")
+        scene_dir, "2d_semseg", "label-filt")
 
     with open(self.intrinsics_path, "r", encoding="UTF-8") as f:
         intrinsics = np.loadtxt(f)
@@ -139,6 +143,7 @@ class ScanNetDataset(SemSegDataset):
 
       rgb_img = torchvision.io.read_image(self.rgb_paths[f])
       rgb_img = rgb_img.type(torch.float32) / 255.0
+      #import pdb; pdb.set_trace()
 
       depth_img = PIL.Image.open(self.depth_paths[f])
       depth_img = torchvision.transforms.functional.pil_to_tensor(depth_img)

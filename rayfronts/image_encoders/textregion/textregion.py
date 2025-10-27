@@ -64,7 +64,7 @@ class TextRegionEncoder(ImageSemSegEncoder):
         clip_pretrained: str = 'openai',
         clip_architecture: str = 'ViT-B/16',
         sam2_checkpoint: str = None,
-        sam2_model_cfg: str = "configs/sam2.1/sam2.1_hiera_b+.yaml",
+        sam2_model_cfg: str = "configs/sam2.1/sam2.1_hiera_bplus.yaml",
         clip_download_root: str = None,
         points_per_side: int = 16,
         dtype: str = 'fp32',
@@ -130,7 +130,7 @@ class TextRegionEncoder(ImageSemSegEncoder):
             self.sam2_generator = None
         
         if self.classes is not None:
-            self.encode_labels()
+            self._encode_labels()
     
     def class_mappings(self):
         # Index 0 is reserved for ignore/background class
@@ -138,7 +138,7 @@ class TextRegionEncoder(ImageSemSegEncoder):
         self._cat_index_to_name.update({i+1: name for i, name in enumerate(self.classes)})
         self._cat_name_to_index = {name: idx for idx, name in self._cat_index_to_name.items()}
     
-    def encode_labels(self):
+    def _encode_labels(self):
         with torch.no_grad():
             all_text_features = []
             for label in self.classes:

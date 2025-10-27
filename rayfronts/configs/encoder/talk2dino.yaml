@@ -1,0 +1,10 @@
+defaults:
+  - base_encoder
+
+_target_: rayfronts.image_encoders.Talk2DINOEncoder
+
+model_name: dinov2_vitb14
+resize_image: False
+resize_dim: 518
+clip_model_name: ViT-B/16
+

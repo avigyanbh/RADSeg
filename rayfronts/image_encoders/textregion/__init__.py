@@ -1,1 +1,2 @@
 from rayfronts.image_encoders.textregion.textregion import TextRegionEncoder
+from rayfronts.image_encoders.textregion.textregion_feats import TextRegionFeatsEncoder

@@ -19,4 +19,8 @@ return_radio_features: True
 
 # Whether to use the summary projection MLP to also project the spatial
 # features. Use this for language alignment.
-use_summ_proj_for_spatial: False 
+use_summ_proj_for_spatial: True
+
+use_sliding_window: True
+slide_crop_size: 336
+slide_stride: 112

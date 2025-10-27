@@ -29,3 +29,9 @@ compile: ${compile}
 
 # Whether to use automatic mixed percision when inferring.
 amp: ${amp}
+
+# Sliding window inference parameters (for large images)
+# Set use_sliding_window to True to enable sliding window inference
+use_sliding_window: True
+slide_crop_size: 336
+slide_stride: 112

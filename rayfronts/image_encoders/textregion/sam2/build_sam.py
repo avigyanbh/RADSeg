@@ -13,6 +13,8 @@ from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 import sam2
+import sys
+import importlib
 
 # Check if the user is running Python from the parent directory of the sam2 repo
 # (i.e. the directory where this repo is cloned into) -- this is not supported since
@@ -70,6 +72,71 @@ HF_MODEL_ID_TO_FILENAMES = {
 }
 
 
+def _try_load_cfg_from_filesystem(config_file):
+    """
+    Try to load a config YAML directly from the filesystem, avoiding reliance on
+    Hydra's search path. Returns an OmegaConf object or None if not found.
+    """
+    # 1) Absolute path or relative to CWD
+    if os.path.isfile(config_file):
+        return OmegaConf.load(config_file)
+
+    # 2) Relative to this module's directory
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    local_path = os.path.join(this_dir, config_file)
+    if os.path.isfile(local_path):
+        return OmegaConf.load(local_path)
+
+    # 3) Common pattern: "sam2.1/sam2.1_hiera_bplus" or
+    #    "configs/sam2.1/sam2.1_hiera_bplus.yaml"
+    #    Normalize to module-local configs directory
+    cfg_rel = config_file
+    if not cfg_rel.endswith(".yaml"):
+        cfg_rel_yaml = cfg_rel + ".yaml"
+    else:
+        cfg_rel_yaml = cfg_rel
+
+    # If path already contains "configs/", try directly; otherwise, prefix it
+    candidates = []
+    if cfg_rel_yaml.startswith("configs/"):
+        candidates.append(os.path.join(this_dir, cfg_rel_yaml))
+    else:
+        candidates.append(os.path.join(this_dir, "configs", cfg_rel_yaml))
+
+    for cand in candidates:
+        if os.path.isfile(cand):
+            return OmegaConf.load(cand)
+
+    return None
+
+
+def _rewrite_targets_to_local_sam2(cfg_node):
+    """Recursively rewrite Hydra _target_ paths from 'sam2.' to the local package
+    path 'rayfronts.image_encoders.textregion.sam2.' so importlib resolves to the
+    bundled SAM2, not any external package named 'sam2'."""
+    local_prefix = "rayfronts.image_encoders.textregion.sam2."
+
+    def transform(node):
+        if isinstance(node, dict):
+            # rewrite _target_ if needed
+            tgt = node.get("_target_")
+            if isinstance(tgt, str) and tgt.startswith("sam2."):
+                node["_target_"] = local_prefix + tgt[len("sam2."):]
+            # recurse
+            for k, v in list(node.items()):
+                node[k] = transform(v)
+            return node
+        elif isinstance(node, list):
+            return [transform(x) for x in node]
+        else:
+            return node
+
+    # Convert to plain container, transform, then back to OmegaConf
+    plain = OmegaConf.to_container(cfg_node, resolve=False)
+    plain = transform(plain)
+    return OmegaConf.create(plain)
+
+
 def build_sam2(
     config_file,
     ckpt_path=None,
@@ -88,9 +155,34 @@ def build_sam2(
             "++model.sam_mask_decoder_extra_args.dynamic_multimask_stability_delta=0.05",
             "++model.sam_mask_decoder_extra_args.dynamic_multimask_stability_thresh=0.98",
         ]
-    # Read config and init model
-    cfg = compose(config_name=config_file, overrides=hydra_overrides_extra)
+    # Prefer loading config directly from filesystem to avoid Hydra search-path issues
+    cfg = _try_load_cfg_from_filesystem(config_file)
+    if cfg is None:
+        # Fallback to Hydra compose if not found on disk
+        cfg = compose(config_name=config_file, overrides=hydra_overrides_extra)
+    # Force targets to local bundled SAM2
+    cfg = _rewrite_targets_to_local_sam2(cfg)
     OmegaConf.resolve(cfg)
+    # Ensure we import the local 'sam2' package in this directory (avoid name clashes)
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_dir = os.path.dirname(this_dir)
+    project_root = os.path.abspath(os.path.join(this_dir, "..", "..", "..", ".."))
+    # Ensure local package paths are importable
+    for p in (project_root, parent_dir):
+        if p not in sys.path:
+            sys.path.insert(0, p)
+    try:
+        mod = sys.modules.get("sam2")
+        mod_file = getattr(mod, "__file__", None)
+        if (mod_file is None) or (not os.path.abspath(mod_file).startswith(this_dir)):
+            if "sam2" in sys.modules:
+                del sys.modules["sam2"]
+            importlib.invalidate_caches()
+            importlib.import_module("sam2")
+    except Exception:
+        # Best-effort; if this fails we still try instantiate
+        pass
+
     model = instantiate(cfg.model, _recursive_=True)
     _load_checkpoint(model, ckpt_path)
     if device is not None:

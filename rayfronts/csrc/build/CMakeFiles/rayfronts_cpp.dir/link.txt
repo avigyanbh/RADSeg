@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -Wl,-s -Wl,--gc-sections -shared  -o rayfronts_cpp.cpython-310-x86_64-linux-gnu.so CMakeFiles/rayfronts_cpp.dir/mapping/vdb_mapping.cpp.o   -L/home/dsta/miniconda3/envs/radseg/lib  -Wl,-rpath,/home/dsta/miniconda3/envs/radseg/lib libnanobind-static.a -ltbb -lopenvdb 

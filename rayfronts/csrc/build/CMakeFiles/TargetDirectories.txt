@@ -1,0 +1,4 @@
+/home/dsta/Desktop/RADSeg/rayfronts/csrc/build/CMakeFiles/rayfronts_cpp.dir
+/home/dsta/Desktop/RADSeg/rayfronts/csrc/build/CMakeFiles/nanobind-static.dir
+/home/dsta/Desktop/RADSeg/rayfronts/csrc/build/CMakeFiles/edit_cache.dir
+/home/dsta/Desktop/RADSeg/rayfronts/csrc/build/CMakeFiles/rebuild_cache.dir

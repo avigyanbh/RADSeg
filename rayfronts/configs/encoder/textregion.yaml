@@ -1,0 +1,11 @@
+defaults:
+  - base_encoder
+
+_target_: rayfronts.image_encoders.TextRegionEncoder
+
+classes: null
+clip_pretrained: openai
+clip_architecture: ViT-B/16
+        
+sam2_checkpoint: ???
+sam2_model_cfg: sam2.1/sam2.1_hiera_bplus

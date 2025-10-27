@@ -21,6 +21,7 @@ class CustomSAM2ImagePredictor(SAM2ImagePredictor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+        #import pdb; pdb.set_trace()
         self._transforms = CustomSAM2Transforms(
             resolution=self.model.image_size,
             mask_threshold=kwargs.get('mask_threshold', 0.0),

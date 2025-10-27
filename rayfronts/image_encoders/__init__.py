@@ -31,11 +31,23 @@ try:
   from rayfronts.image_encoders.textregion import TextRegionEncoder
 except ModuleNotFoundError as e:
   failed_to_import.append("TextRegionEncoder")
-
+try:
+  from rayfronts.image_encoders.textregion import TextRegionFeatsEncoder
+except ModuleNotFoundError as e:
+  failed_to_import.append("TextRegionFeatsEncoder")
 try:
   from rayfronts.image_encoders.grounded_sam import GroundedSamSemSegEncoder
 except ModuleNotFoundError as e:
   failed_to_import.append("GroundedSamSemSegEncoder")
+try:
+  from rayfronts.image_encoders.res_radio import ResRadioEncoder
+except ModuleNotFoundError as e:
+  failed_to_import.append("ResRadioEncoder")
+
+try:
+  from rayfronts.image_encoders.radiosim import RadioSimilarityPrefixEncoder
+except ModuleNotFoundError as e:
+  failed_to_import.append("RadioSimilarityPrefixEncoder")
 
 if len(failed_to_import) > 0:
   logger.info("Could not import %s."
