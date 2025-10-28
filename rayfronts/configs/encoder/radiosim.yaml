@@ -21,3 +21,8 @@ compile: ${compile}
 
 sim_scale: 10
 prefix_scale: 2
+agg_beta: 0.1
+agg_gamma: 10.0
+use_sliding_window: True
+slide_crop_size: 336
+slide_stride: 112
