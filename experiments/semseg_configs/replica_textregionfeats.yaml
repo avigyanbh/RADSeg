@@ -1,14 +1,14 @@
 defaults:
   - default
-  - override dataset: tartanair
-  - override encoder: trident
+  - override dataset: niceslam_replica
+  - override encoder: textregion_feats
   - override mapping: semantic_voxel_map
   - override vis: rerun # Choose the visualizer - can be either rerun or null
 
 # Choose any suitable folder for saving the results
-eval_out: eval_out/trident
+eval_out: eval_out/textregion_feats
 
-load_external_gt: False
+load_external_gt: True
 prediction_thresh: 0.1 # Threshold after which a prediction is made.
 prompt_denoising_thresh: 0.5 # Confidence threshold below which the target class prompt is removed
 k: 5 # K nearest neighbor value for aligning voxels. Set to 0 to impose a 1-to-1 mapping (0 distance)
@@ -16,28 +16,29 @@ k: 5 # K nearest neighbor value for aligning voxels. Set to 0 to impose a 1-to-1
 # For running the evaluation script on multiple scenes at the same time.
 hydra:
   searchpath:
+    - file:///home/dsta/Desktop/RADSeg/rayfronts/image_encoders/textregion/sam2/configs
     - file:///home/dsta/Desktop/RADSeg/rayfronts/configs
   sweeper:
     params:
-      dataset.scene_name: Factory, Downtown, ConstructionSiteOvercast, AbandonedCableDay
+      dataset.scene_name: office0,office1,office2,office3,office4,room0,room1,room2
 
 dataset:
-  path: /home/dsta/Documents/Data/TartanAirV2 #Path to the root of the dataset
-  scene_name: Factory
-  rgb_resolution: [640, 640]
-  depth_resolution: [640, 640]
+  path: /home/dsta/Documents/Data/NiceSlam/  #Path to the root of the dataset
+  scene_name: office0
+  rgb_resolution: [640, 1136]
+  depth_resolution: [640, 1136]
   frame_skip: 10
 
 mapping:
-  vox_size: 1 # 1m voxels
+  vox_size: 0.05 # 5cm voxels
   vox_accum_period: 4
   max_pts_per_frame: -1
 
 encoder:
-  model_type: ViT-B/16
-  vfm_model: dino
-  sam_model_type: vit_b
-  sam_ckpt: /home/dsta/Documents/Data/sam_vit_b_01ec64.pth # Path to corresponding SAM checkpoint
+  sam2_checkpoint: /home/dsta/Documents/Data/sam2.1_hiera_base_plus.pt
+  sam2_model_cfg: configs/sam2.1/sam2.1_hiera_bplus.yaml
 
 querying:
   text_query_mode: labels
+
+#classes_to_ignore: ["wall", "floor", "ceiling", "door", "window", "background"]

@@ -16,20 +16,28 @@ k: 5 # K nearest neighbor value for aligning voxels. Set to 0 to impose a 1-to-1
 
 # For running the script on multiple scenes at the same time.
 hydra:
+  searchpath:
+    - file:///home/dsta/Desktop/RADSeg/rayfronts/configs
   sweeper:
     params:
       dataset.scene_name: office0,office1,office2,office3,office4,room0,room1,room2
 
 dataset:
-  path: ??? # NICE SLAM REPLICA
+  path: /home/dsta/Documents/Data/NiceSlam
   scene_name: office0
   rgb_resolution: [480, 640]
   depth_resolution: [480, 640]
   frame_skip: 10
 
 encoder:
-  model_version: radio_v2.5-l
+  model_version: radio_v2.5-b
+  gauss_std: 7.0
   lang_model: siglip
+  compile: false
+  amp: false
+  use_sliding_window: False
+  slide_crop_size: 336
+  slide_stride: 112
 
 mapping:
   vox_size: 0.05 #5cm voxels
@@ -40,4 +48,4 @@ querying:
   text_query_mode: labels
 
 # Comment out to include background classes.
-classes_to_ignore: ["wall", "floor", "ceiling", "door", "window", "background"]
+#classes_to_ignore: ["wall", "floor", "ceiling", "door", "window", "background"]
